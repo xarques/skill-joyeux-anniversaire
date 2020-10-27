@@ -1,0 +1,336 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "joyeux anniversaire",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "RegisterBirthdayIntent",
+          "slots": [
+            {
+              "name": "day",
+              "type": "AMAZON.NUMBER",
+              "samples": ["le {day}", "{day}"]
+            },
+            {
+              "name": "month",
+              "type": "MonthSlotType",
+              "samples": ["{month}"]
+            },
+            {
+              "name": "year",
+              "type": "AMAZON.NUMBER",
+              "samples": [
+                "l an {year}",
+                "l année {year}",
+                "mon année de naissance est {year}",
+                "{year}",
+                "je suis né en {year}"
+              ]
+            }
+          ],
+          "samples": [
+            "ma date de naissance est le {day} {month} {year}",
+            "enregistre ma date d'anniversaire",
+            "enregistre mon anniversaire",
+            "le {day} {month} de l'année {year}",
+            "le {day} du mois de {month} ",
+            "{day} {month}",
+            "le {day} {month} {year}"
+          ]
+        },
+        {
+          "name": "SayBirthdayIntent",
+          "slots": [],
+          "samples": [
+            "me dire le nombre de jours avant mon anniversaire",
+            "dis moi combien il reste avant mon anniversaire",
+            "quand a lieu mon annivesaire",
+            "il reste combien de temps avant mon anniversaire"
+          ]
+        }
+      ],
+      "types": [
+        {
+          "name": "MonthSlotType",
+          "values": [
+            {
+              "id": "12",
+              "name": {
+                "value": "décembre"
+              }
+            },
+            {
+              "id": "11",
+              "name": {
+                "value": "novembre"
+              }
+            },
+            {
+              "id": "10",
+              "name": {
+                "value": "octobre"
+              }
+            },
+            {
+              "id": "9",
+              "name": {
+                "value": "septembre"
+              }
+            },
+            {
+              "id": "8",
+              "name": {
+                "value": "aout"
+              }
+            },
+            {
+              "id": "7",
+              "name": {
+                "value": "juillet"
+              }
+            },
+            {
+              "id": "6",
+              "name": {
+                "value": "juin"
+              }
+            },
+            {
+              "id": "5",
+              "name": {
+                "value": "mai"
+              }
+            },
+            {
+              "id": "4",
+              "name": {
+                "value": "avril"
+              }
+            },
+            {
+              "id": "3",
+              "name": {
+                "value": "mars"
+              }
+            },
+            {
+              "id": "2",
+              "name": {
+                "value": "février"
+              }
+            },
+            {
+              "id": "1",
+              "name": {
+                "value": "janvier"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "dialog": {
+      "intents": [
+        {
+          "name": "RegisterBirthdayIntent",
+          "delegationStrategy": "ALWAYS",
+          "confirmationRequired": true,
+          "prompts": {
+            "confirmation": "Confirm.Intent.671556511139"
+          },
+          "slots": [
+            {
+              "name": "day",
+              "type": "AMAZON.NUMBER",
+              "confirmationRequired": false,
+              "elicitationRequired": true,
+              "prompts": {
+                "elicitation": "Elicit.Slot.671556511139.1283484603661"
+              },
+              "validations": [
+                {
+                  "type": "isLessThanOrEqualTo",
+                  "prompt": "Slot.Validation.671556511139.1283484603661.525747953189",
+                  "value": "31"
+                },
+                {
+                  "type": "isGreaterThanOrEqualTo",
+                  "prompt": "Slot.Validation.671556511139.1283484603661.868839137491",
+                  "value": "1"
+                }
+              ]
+            },
+            {
+              "name": "month",
+              "type": "MonthSlotType",
+              "confirmationRequired": false,
+              "elicitationRequired": true,
+              "prompts": {
+                "elicitation": "Elicit.Slot.671556511139.1026885116172"
+              },
+              "validations": [
+                {
+                  "type": "hasEntityResolutionMatch",
+                  "prompt": "Slot.Validation.671556511139.1026885116172.935011739140"
+                }
+              ]
+            },
+            {
+              "name": "year",
+              "type": "AMAZON.NUMBER",
+              "confirmationRequired": false,
+              "elicitationRequired": true,
+              "prompts": {
+                "elicitation": "Elicit.Slot.671556511139.1101753056989"
+              },
+              "validations": [
+                {
+                  "type": "isLessThan",
+                  "prompt": "Slot.Validation.671556511139.1101753056989.667362108870",
+                  "value": "2010"
+                },
+                {
+                  "type": "isGreaterThanOrEqualTo",
+                  "prompt": "Slot.Validation.671556511139.1101753056989.885162280685",
+                  "value": "1920"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "delegationStrategy": "ALWAYS"
+    },
+    "prompts": [
+      {
+        "id": "Slot.Validation.671556511139.1026885116172.935011739140",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "{month} n'est pas un mois. Quel est votre vrai mois de naissance ?"
+          }
+        ]
+      },
+      {
+        "id": "Slot.Validation.671556511139.1101753056989.667362108870",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Vous me paraissez bien jeune. Quel est votre vrai année de naissance ?"
+          }
+        ]
+      },
+      {
+        "id": "Slot.Validation.671556511139.1101753056989.885162280685",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Vous me paraissez bien agé. Quel est votre vraie année de naissance ?"
+          }
+        ]
+      },
+      {
+        "id": "Slot.Validation.671556511139.1283484603661.525747953189",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Il y a au plus trente et un jour dans un mois. Quel est votre véritable jour de naissance ?"
+          }
+        ]
+      },
+      {
+        "id": "Confirm.Intent.671556511139",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Voulez-vous enregistrer le {day} {month} {year} comme votre date de naissance ?"
+          },
+          {
+            "type": "PlainText",
+            "value": "le {day} {month} {year} , c'est bien ça ?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.671556511139.1283484603661",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Donnez moi votre jour de naissance"
+          },
+          {
+            "type": "PlainText",
+            "value": "Quel jour êtes vous né ?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Quel est votre jour de naissance ?"
+          }
+        ]
+      },
+      {
+        "id": "Slot.Validation.671556511139.1283484603661.868839137491",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "{day} n'est pas un jour valide. Donnez-moi un jour plus grand que zéro"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.671556511139.1101753056989",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Donnez-moi votre année de naissance"
+          },
+          {
+            "type": "PlainText",
+            "value": "Vous êtes né en quelle année ?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Quelle est votre année de naissance ?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Vous êtes né le {day} {month} de quelle année ?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.671556511139.1026885116172",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Vous êtes né quel mois ?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Quel est votre mois de naissance ?"
+          }
+        ]
+      }
+    ]
+  }
+}
