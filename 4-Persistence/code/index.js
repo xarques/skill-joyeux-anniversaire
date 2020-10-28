@@ -117,7 +117,7 @@ const SayBirthdayIntentHandler = {
             speechText += t('WILL_TURN_MSG', {count: age + 1});
 
             if (daysUntilBirthday === 0) {
-                speechText = t('GREET_MSG', {count: age});
+                speechText = t('GREAT_MSG', {count: age});
             }
             speechText += t('POST_SAY_HELP_MSG');
         } else {
