@@ -312,5 +312,4 @@ exports.handler = Alexa.SkillBuilders.custom()
         LoggingResponseInterceptor,
         SaveAttributesResponseInterceptor)
     .withPersistenceAdapter(persistenceAdapter)
-    // .withCustomUserAgent('sample/hello-world/v1.2')
     .lambda();
