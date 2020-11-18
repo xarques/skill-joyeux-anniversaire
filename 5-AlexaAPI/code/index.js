@@ -5,30 +5,18 @@
  * */
 const Alexa = require('ask-sdk-core');
 const moment = require('moment-timezone')
-const i18n = require('i18next');
 
-const languageStrings = require('./localisation')
-
-const getPersistenceAdapter = (tableName) => {
-    const isAlexaHosted = () => process.env.S3_PERSISTENCE_BUCKET;
-    if (isAlexaHosted()) {
-        const {S3PersistenceAdapter} = require('ask-sdk-s3-persistence-adapter');
-        return new S3PersistenceAdapter({bucketName: process.env.S3_PERSISTENCE_BUCKET})
-    }
-    const {DynamoDbPersistenceAdapter} = require('ask-sdk-dynamodb-persistence-adapter');
-    return new DynamoDbPersistenceAdapter({tableName, createTable: true})
-}
-
-const persistenceAdapter = getPersistenceAdapter();
+const utils = require('./util')
+const interceptors = require('./interceptors')
 
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
     },
-    handle(handlerInput) {
+   handle(handlerInput) {
         const {t, attributesManager} = handlerInput;
         const sessionAttributes = attributesManager.getSessionAttributes();
-        
+
         const day = sessionAttributes['day']
         const monthName = sessionAttributes['monthName']
         const year = sessionAttributes['year']
@@ -97,7 +85,7 @@ const SayBirthdayIntentHandler = {
         const day = sessionAttributes['day']
         const month = sessionAttributes['month']
         const year = sessionAttributes['year']
-        
+        const name = sessionAttributes['name']
         let speechText = '';
         const dateAvailable = day && month && year;
 
@@ -112,11 +100,11 @@ const SayBirthdayIntentHandler = {
             }
             const age = today.diff(wasBorn, 'years');
             const daysUntilBirthday = nextBirthday.startOf('day').diff(today, 'days');
-            speechText = t('DAYS_LEFT_MSG', {count: daysUntilBirthday});
+            speechText = t('DAYS_LEFT_MSG', {count: daysUntilBirthday, name});
             speechText += t('WILL_TURN_MSG', {count: age + 1});
 
             if (daysUntilBirthday === 0) {
-                speechText = t('GREAT_MSG', {count: age});
+                speechText = t('GREAT_MSG', {count: age, name});
             }
             speechText += t('POST_SAY_HELP_MSG');
         } else {
@@ -157,7 +145,11 @@ const CancelAndStopIntentHandler = {
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
     },
     handle(handlerInput) {
-        const speakOutput = handlerInput.t('GOODBYE_MSG');
+        const {t, attributesManager} = handlerInput
+        const sessionAttributes = attributesManager.getSessionAttributes();
+        const name = sessionAttributes['name']
+
+        const speakOutput = t('GOODBYE_MSG', {name});
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -237,56 +229,6 @@ const ErrorHandler = {
     }
 };
 
-// This request interceptor will bind a translation function 't' to the handlerInput.
-const LocalisationRequestInterceptor = {
-  process(handlerInput) {
-      i18n.init({
-          // lng: handlerInput.requestEnvelope.request.locale,
-          lng: Alexa.getLocale(handlerInput.requestEnvelope),
-          resources: languageStrings
-      }).then((t) => {
-          handlerInput.t = (...args) => t(...args);
-      });
-  }
-};
-
-const LoggingRequestInterceptor = {
-    process(handlerInput) {
-        console.log(`Incoming request: ${JSON.stringify(handlerInput.requestEnvelope)}`);
-    }
-};
-
-const LoggingResponseInterceptor = {
-    process(handlerInput, response) {
-        console.log(`Outgoing response: ${JSON.stringify(response)}`);
-    }
-};
-
-const LoadAttributesRequestInterceptor = {
-    async process(handlerInput) {
-        const {attributesManager, requestEnvelope} = handlerInput;
-        if (Alexa.isNewSession(requestEnvelope)) {
-            const persistentAttributes = await attributesManager.getPersistentAttributes() || {};
-            console.log('Loading from persistent storage: ', JSON.stringify(persistentAttributes));
-            attributesManager.setSessionAttributes(persistentAttributes);
-        }
-    }
-}
-
-const SaveAttributesResponseInterceptor = {
-    async process(handlerInput, response) {
-        if (!response) return;
-        const {attributesManager, requestEnvelope} = handlerInput;
-        const sessionAttributes = attributesManager.getSessionAttributes();
-        const shouldEndSession = (typeof response.shouldEndSession === "undefined" ? true: response.shouldEndSession);
-        if (shouldEndSession || Alexa.getRequestType(requestEnvelope) === "SessionEndedRequest") {
-            sessionAttributes['sessionCounter'] = sessionAttributes['sessionCounter'] ? sessionAttributes['sessionCounter'] + 1: 1;
-            console.log('Saving to persistent storage: ', JSON.stringify(sessionAttributes));
-            attributesManager.setPersistentAttributes(sessionAttributes)
-            await attributesManager.savePersistentAttributes();
-        }
-    }
-}
 /**
  * This handler acts as the entry point for your skill, routing all request and response
  * payloads to the handlers above. Make sure any new handlers or interceptors you've
@@ -305,11 +247,14 @@ exports.handler = Alexa.SkillBuilders.custom()
     .addErrorHandlers(
         ErrorHandler)
     .addRequestInterceptors(
-        LocalisationRequestInterceptor,
-        LoggingRequestInterceptor,
-        LoadAttributesRequestInterceptor)
+        interceptors.LocalisationRequestInterceptor,
+        interceptors.LoggingRequestInterceptor,
+        interceptors.LoadAttributesRequestInterceptor,
+        interceptors.LoadNameRequestInterceptor,
+        interceptors.LoadTimezoneRequestInterceptor)
     .addResponseInterceptors(
-        LoggingResponseInterceptor,
-        SaveAttributesResponseInterceptor)
-    .withPersistenceAdapter(persistenceAdapter)
+        interceptors.LoggingResponseInterceptor,
+        interceptors.SaveAttributesResponseInterceptor)
+    .withPersistenceAdapter(utils.getPersistenceAdapter())
+    .withApiClient(new Alexa.DefaultApiClient())
     .lambda();

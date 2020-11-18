@@ -24,5 +24,5 @@
 ## Backend
 
 - On enrichit le dictionnaire de traductions
-- On ajoute de _addDelegateDirective_ dans _LaunchRequestIntent_ pour déléguer à l'intent _RegisterBirthdayIntent_
+- On ajoute l'instruction _addDelegateDirective_ dans _LaunchRequestIntent_ pour déléguer à l'intent _RegisterBirthdayIntent_
 - Au sein de l'intent _RegisterBirthdayIntent_, on teste le confirmationStatus qui a été positionné à la fin du multi-turn dialog suite à la réponse de l'utilisateur
