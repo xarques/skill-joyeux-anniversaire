@@ -1,10 +1,7 @@
 const Alexa = require('ask-sdk-core');
 const i18n = require('i18next');
-const languageStrings = require('./localisation')
-// we no specify which attributes are saved
-const PERSISTENT_ATTRIBUTES_NAMES = ['day', 'month', 'monthName', 'year','sessionCounter'];
-// these are the permissions needed to get the first name
-const GIVEN_NAME_PERMISSION = ['alexa::profile:given_name:read'];
+const languageStrings = require('./localisation');
+const constants = require('./constants');
 
 const LoggingRequestInterceptor = {
     process(handlerInput) {
@@ -64,7 +61,7 @@ const LoadAttributesRequestInterceptor = {
           if ((shouldEndSession || Alexa.getRequestType(requestEnvelope) === "SessionEndedRequest") && loadedThisSession) {
               sessionAttributes['sessionCounter'] = sessionAttributes['sessionCounter'] ? sessionAttributes['sessionCounter'] + 1: 1;
               for (var key in sessionAttributes) {
-                  if (!PERSISTENT_ATTRIBUTES_NAMES.includes(key))
+                  if (!constants.PERSISTENT_ATTRIBUTES_NAMES.includes(key))
                   delete sessionAttributes[key]
                 }
               console.log('Saving to persistent storage: ', JSON.stringify(sessionAttributes));
@@ -96,7 +93,7 @@ const LoadAttributesRequestInterceptor = {
                 console.log('LoadNameRequestInterceptor' + JSON.stringify(error));
                 if (error.statusCode === 401 || error.statusCode === 403) {
                     // the user needs to enable the permissions for given name, let's append a permissions card to the response
-                    handlerInput.responseBuilder.withAskForPermissionsConsentCard(GIVEN_NAME_PERMISSION)
+                    handlerInput.responseBuilder.withAskForPermissionsConsentCard(constants.GIVEN_NAME_PERMISSION)
                 }
             }
         }

@@ -4,10 +4,12 @@
  * session persistence, api calls, and more.
  * */
 const Alexa = require('ask-sdk-core');
-const moment = require('moment-timezone')
+const moment = require('moment-timezone');
 
-const utils = require('./util')
-const interceptors = require('./interceptors')
+const util = require('./util');
+const interceptors = require('./interceptors');
+const logic = require('./logic');
+const constants = require('./constants');
 
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
@@ -82,10 +84,10 @@ const SayBirthdayIntentHandler = {
     handle(handlerInput) {
         const {t, responseBuilder, attributesManager} = handlerInput
         const sessionAttributes = attributesManager.getSessionAttributes();
-        const day = sessionAttributes['day']
-        const month = sessionAttributes['month']
-        const year = sessionAttributes['year']
-        const name = sessionAttributes['name']
+        const day = sessionAttributes['day'];
+        const month = sessionAttributes['month'];
+        const year = sessionAttributes['year'];
+        const name = sessionAttributes['name'];
         let speechText = '';
         const dateAvailable = day && month && year;
 
@@ -115,6 +117,106 @@ const SayBirthdayIntentHandler = {
                 confirmationStatus: 'NONE',
                 slots:{}
             })
+        }
+        return responseBuilder
+            .speak(speechText)
+            .reprompt(t('REPROMPT_MSG'))
+            .getResponse();
+    }
+}
+
+const RemindBirthdayIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RemindBirthdayIntent';
+    },
+    async handle(handlerInput) {
+        const {attributesManager, serviceClientFactory, requestEnvelope, responseBuilder, t} = handlerInput;
+        const sessionAttributes = attributesManager.getSessionAttributes();
+        const {intent} = requestEnvelope.request;
+        
+        const day = sessionAttributes['day'];
+        const month = sessionAttributes['month'];
+        const year = sessionAttributes['year'];
+        const name = sessionAttributes['name'];
+        let timezone = sessionAttributes['timezone'];
+        const message = Alexa.getSlotValue(requestEnvelope, 'message');
+        
+        if (intent.confirmationStatus !== 'CONFIRMED') {
+            return responseBuilder
+                .speak(t('CANCEL_MSG') + t('REPROMPT_MSG'))
+                .reprompt(t('REPROMPT_MSG'))
+                .getResponse();
+        }
+        
+        let speechText = '';
+        const dateAvailable = day && month && year;
+        if (dateAvailable) {
+            if (!timezone) {
+                // timezone = 'Europe/Paris'; // so it works on the simulator, you should uncomment this line, replace with your time zone and comment sentence below
+                return responseBuilder.speechText(t('NO_TIMEZONE_MSG')).getResponse();
+            }
+            
+            const birthdayData = logic.getBirthdayData(day, month, year, timezone);
+            
+            // let's create a reminder via the Reminder API
+            // don't forget to enable this permission in your skill configuration (Build tab -> Options -> Permissions)
+            // or you'll get a SessionEndedRequest with an ERROR of type INVALID_RESPONSE
+            try {
+                const {permissions} = requestEnvelope.context.System.user;
+                if (!(permissions && permissions.consentToken)) {
+                    throw {status: 401, message: 'No permission available'};
+                }
+                const reminderServiceClient = serviceClientFactory.getReminderManagementServiceClient();
+                // reminders are retained for 3 days after they remind the customer before being deleted 
+                const remindersList = await reminderServiceClient.getReminders();
+                console.log('Current reminders: ', JSON.stringify(remindersList));
+                // delete previous reminder if present
+                const previousReminder = sessionAttributes['reminderId'];
+                if (previousReminder) {
+                    try {
+                        if (remindersList.totalCount !== 0) {
+                            await reminderServiceClient.deleteReminder(previousReminder);
+                            delete sessionAttributes['reminderId'];
+                            console.log('Deleted previous reminder token:', previousReminder);
+                        }
+                    } catch (error) {
+                        // fails silently as it means the reminder does not exist or there was a problem with deletion
+                        // either way, we can move on and create the new reminder
+                        console.log('Failed to delete reminder' + previousReminder + ' via ' + JSON.stringify(error));
+                    }
+                }
+                // create reminder structure
+                const reminder = logic.createBirthdayReminder(
+                    birthdayData.daysUntilBirthday, 
+                    timezone, 
+                    Alexa.getLocale(requestEnvelope),
+                    message);
+                const reminderResponse = await reminderServiceClient.createReminder(reminder); // the response will include an "alertToken" which you can use to refer to this reminder
+                // save reminder id in session attributes
+                sessionAttributes['reminderId'] = reminderResponse.alertToken;
+                console.log('Reminder created with token: ', reminderResponse.alertToken);
+                speechText = t('REMINDER_CREATED_MSG', {name});
+                speechText += t('POST_REMINDER_HELP_MSG');
+            } catch (error) {
+                console.log(JSON.stringify(error));
+                switch (error.statusCode) {
+                    case 401: // the user has to enable the permissions for reminders, let's attach a permissions card to the response
+                        responseBuilder.withAskForPermissionsConsentCard(constants.REMINDERS_PERMISSION);
+                        speechText = t('MISSING_PERMISSION_MSG');
+                        break;
+                    case 403: // devices suxh as the simulator do not support reminder management
+                        speechText = t('UNSUPPORTED_DEVICE_MSG');
+                        break;
+                    default: 
+                        speechText = t('REMINDER_ERROR_MSG');
+                }
+                speechText += t('REPROMPT_MSG');
+            }
+        } else {
+            speechText += t('MISSING_MSG');
+            // we use intent chaining to trigger the birthday registration multi-turn
+            responseBuilder.addDelegateDirective({name: 'RegisterBirthdayIntent', confirmationStatus: 'NONE', slots:{}});
         }
         return responseBuilder
             .speak(speechText)
@@ -239,6 +341,7 @@ exports.handler = Alexa.SkillBuilders.custom()
         LaunchRequestHandler,
         RegisterBirthdayIntentHandler,
         SayBirthdayIntentHandler,
+        RemindBirthdayIntentHandler,
         HelpIntentHandler,
         CancelAndStopIntentHandler,
         FallbackIntentHandler,
@@ -255,6 +358,6 @@ exports.handler = Alexa.SkillBuilders.custom()
     .addResponseInterceptors(
         interceptors.LoggingResponseInterceptor,
         interceptors.SaveAttributesResponseInterceptor)
-    .withPersistenceAdapter(utils.getPersistenceAdapter())
+    .withPersistenceAdapter(util.getPersistenceAdapter())
     .withApiClient(new Alexa.DefaultApiClient())
     .lambda();

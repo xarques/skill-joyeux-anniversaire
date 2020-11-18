@@ -1,7 +1,7 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "joyeux anniversaire",
+      "invocationName": "ma date de naissance",
       "intents": [
         {
           "name": "AMAZON.CancelIntent",
@@ -66,6 +66,27 @@
             "dis moi combien il reste avant mon anniversaire",
             "quand a lieu mon annivesaire",
             "il reste combien de temps avant mon anniversaire"
+          ]
+        },
+        {
+          "name": "RemindBirthdayIntent",
+          "slots": [
+            {
+              "name": "message",
+              "type": "AMAZON.SearchQuery",
+              "samples": ["{message}"]
+            }
+          ],
+          "samples": [
+            "crée un rappel",
+            "mets un rappel pour mon anniversaire",
+            "rappelle-moi mon anniversaire avec le texte suivant {message}",
+            "rappelle-moi mon anniversaire avec le message suivant {message}",
+            "créer un rappel",
+            "créer un rappel avec le {message}",
+            "créer un rappel avec le texte suivant {message}",
+            "créer un rappel avec le message suivant {message}",
+            "créer un rappel avec le message {message}"
           ]
         }
       ],
@@ -217,6 +238,24 @@
               ]
             }
           ]
+        },
+        {
+          "name": "RemindBirthdayIntent",
+          "confirmationRequired": true,
+          "prompts": {
+            "confirmation": "Confirm.Intent.1522014911377"
+          },
+          "slots": [
+            {
+              "name": "message",
+              "type": "AMAZON.SearchQuery",
+              "confirmationRequired": false,
+              "elicitationRequired": true,
+              "prompts": {
+                "elicitation": "Elicit.Slot.1522014911377.532146773698"
+              }
+            }
+          ]
         }
       ],
       "delegationStrategy": "ALWAYS"
@@ -328,6 +367,36 @@
           {
             "type": "PlainText",
             "value": "Quel est votre mois de naissance ?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.1522014911377.532146773698",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Quel message dois-je vous rappeler pour votre anniversaire ?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Quel message dois-je vous lire pour votre anniversaire ?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Dites-moi le message à vous rappeler pour votre anniversaire ?"
+          }
+        ]
+      },
+      {
+        "id": "Confirm.Intent.1522014911377",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Le message {message} vous sera envoyé pour votre anniversaire. Etes-vous d'accord ?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Je vous enverrai le message suivant pour votre anniversaire. {message} . Etes-vous d'accord ?"
           }
         ]
       }
