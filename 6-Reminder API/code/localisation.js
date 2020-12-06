@@ -36,7 +36,7 @@ module.exports = {
             FALLBACK_MSG: 'Désolé, je ne sais pas. Pouvez vous reformuler ?',
             ERROR_MSG: 'Désolé, je n\'ai pas compris. Pouvez vous reformuler ?',
             NO_TIMEZONE_MSG: "Je n'ai pas réussi à déterminer votre fuseau horaire. Veuillez vérifier les paramètres de votre appareil et réessayez. ",
-            REMINDER_ERROR_MSG: "Il y a eu un problème lors de la création du rappel.",
+            REMINDER_ERROR_MSG: "Il y a eu un problème lors de la création du rappel. ",
             UNSUPPORTED_DEVICE_MSG: "Votre appareil ne supporte pas la création de rappels. ",
             CANCEL_MSG: "OK, j'ai annulé la demande de rappel. ",
             MISSING_PERMISSION_MSG: "Je n'ai pas accès à la création de rappels. Veuillez accéder à votre application Alexa et suivez les instructions depuis la card que je vous ai envoyé. ",
