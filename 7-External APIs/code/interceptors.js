@@ -80,6 +80,7 @@ const LoadAttributesRequestInterceptor = {
             // don't forget to enable this permission in your skill configuration (Build tab -> Permissions)
             // or you'll get a SessionEndRequest with an ERROR of type INVALID_RESPONSE
             // Per our policies you can't make personal data persistent so we limt "name" to session attributes
+            // Skills cannot collect personal identifiable information (PII)
             try {
                 const {permissions} = requestEnvelope.context.System.user;
                 if (!(permissions && permissions.consentToken))
