@@ -116,6 +116,8 @@ const LoadAttributesRequestInterceptor = {
                     console.log('Got timezone for device', timezone);
                     // save to session attributes
                     sessionAttributes['timezone'] = timezone;
+                } else {
+                    sessionAttributes['timezone'] = 'Europe/Paris';
                 }
             } catch (error) {
                 console.log('LoadTimezoneRequestInterceptor' + JSON.stringify(error));
