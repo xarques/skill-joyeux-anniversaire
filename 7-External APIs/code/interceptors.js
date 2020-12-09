@@ -119,6 +119,7 @@ const LoadAttributesRequestInterceptor = {
                 }
             } catch (error) {
                 console.log('LoadTimezoneRequestInterceptor' + JSON.stringify(error));
+                sessionAttributes['timezone'] = 'Europe/Paris';
             }
         }
     } 
